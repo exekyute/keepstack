@@ -5,6 +5,7 @@ Environment:
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
 
@@ -15,6 +16,14 @@ def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] == "seed":
         from .seed import run_seed
         run_seed()
+        return
+    if len(sys.argv) > 1 and sys.argv[1] == "gc":
+        from .db import init_db
+        from .storage import collect_orphan_blobs
+
+        init_db()
+        result = collect_orphan_blobs(dry_run="--dry-run" in sys.argv[2:])
+        print(json.dumps(result, indent=2))
         return
     host = os.environ.get("KEEPSTACK_HOST", "0.0.0.0")
     port = int(os.environ.get("KEEPSTACK_PORT", "8000"))
