@@ -1,0 +1,22 @@
+# Keepstack runtime data
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# OS / editor / harness
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.claude/

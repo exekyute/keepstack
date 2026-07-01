@@ -1,0 +1,8 @@
+# Keepstack runs on a deliberately small dependency surface.
+# Everything else (auth, hashing, tokens, metadata parsing, standards
+# endpoints) is built on the Python standard library so self-hosting
+# stays a one-command affair.
+fastapi>=0.115
+uvicorn>=0.30
+python-multipart>=0.0.9
+Pillow>=10.0
