@@ -184,10 +184,10 @@ def iiif_info(asset: dict) -> dict:
         "id": base,
         "type": "ImageService3",
         "protocol": "http://iiif.io/api/image",
-        "profile": "level1",
+        "profile": "level2",
         "width": width,
         "height": height,
-        "maxWidth": 1600,
+        "tiles": [{"width": 512, "scaleFactors": [1, 2, 4, 8, 16]}],
         "sizes": [
             {"width": 256, "height": max(1, round(256 * height / width))},
             {"width": 512, "height": max(1, round(512 * height / width))},

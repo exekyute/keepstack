@@ -617,14 +617,14 @@ def iiif_info(uuid: str):
 @app.get("/iiif/3/{uuid}/{region}/{size}/{rotation}/{quality}.{fmt}")
 def iiif_image(uuid: str, region: str, size: str, rotation: str, quality: str, fmt: str):
     a = _get_asset_or_404(uuid)
-    # Minimal level-1 support: full region, w, / max sizing.
-    max_edge = 1600
-    if size not in ("full", "max"):
-        try:
-            max_edge = int(size.replace(",", "").strip()) or 1600
-        except ValueError:
-            max_edge = 1600
-    data = thumbnails.rendition(a["sha256"], a["storage_key"], a["media_type"], a["ext"], max_edge)
+    if fmt.lower() not in ("jpg", "jpeg"):
+        raise HTTPException(400, "Only JPEG IIIF output is supported")
+    try:
+        data = thumbnails.iiif_rendition(
+            a["sha256"], a["storage_key"], a["media_type"], region, size, rotation
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     if data is None:
         raise HTTPException(415, "IIIF available for images only")
     return Response(content=data, media_type="image/jpeg")

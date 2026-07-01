@@ -4,6 +4,13 @@ All notable changes to Keepstack are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 semantic versioning.
 
+## [Unreleased]
+
+### Added
+
+- Advertise IIIF Image API level 2 and support region cropping, percent
+  regions, best-fit sizing, and rotation for IIIF image requests.
+
 ## [0.1.0] - 2026-06-28
 
 The first working release. A complete DAM core, built to sit in the gap between
