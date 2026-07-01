@@ -1,0 +1,112 @@
+"""Core pipeline tests: storage dedup, ingest, metadata, search, auth, fixity.
+
+These run against a throwaway data directory so they never touch a real
+repository. Run with:  python -m pytest -q
+"""
+import io
+import os
+import tempfile
+
+os.environ["KEEPSTACK_DATA_DIR"] = tempfile.mkdtemp(prefix="keepstack-test-")
+os.environ["KEEPSTACK_AI_ENABLED"] = "false"
+
+from PIL import Image  # noqa: E402
+
+from keepstack import ai, ingest, search, standards, storage  # noqa: E402
+from keepstack.auth import (hash_password, make_token, role_at_least,  # noqa: E402
+                         verify_password, verify_token)
+from keepstack.db import get_conn, init_db  # noqa: E402
+
+
+def _img_bytes(color=(90, 130, 240), size=(400, 300)):
+    buf = io.BytesIO()
+    Image.new("RGB", size, color).save(buf, format="JPEG")
+    return buf.getvalue()
+
+
+def setup_module(_):
+    init_db()
+
+
+def test_password_hashing():
+    h = hash_password("s3cret")
+    assert verify_password("s3cret", h)
+    assert not verify_password("wrong", h)
+
+
+def test_token_roundtrip():
+    tok = make_token(42, "admin")
+    payload = verify_token(tok)
+    assert payload["sub"] == 42 and payload["role"] == "admin"
+    assert verify_token(tok + "x") is None
+
+
+def test_role_hierarchy():
+    assert role_at_least("admin", "viewer")
+    assert role_at_least("editor", "contributor")
+    assert not role_at_least("viewer", "editor")
+
+
+def test_ingest_creates_asset_with_dimensions_and_thumb():
+    a = ingest.ingest_stream(io.BytesIO(_img_bytes()), "skyline.jpg")
+    assert a["media_type"] == "image"
+    assert a["width"] == 400 and a["height"] == 300
+    assert a["sha256"] and storage.blob_path(a["storage_key"]).exists()
+    assert storage.thumb_path(a["thumb_key"]).exists()
+
+
+def test_content_addressable_dedup():
+    data = _img_bytes(color=(10, 200, 120), size=(256, 256))
+    first = ingest.ingest_stream(io.BytesIO(data), "dup_a.jpg")
+    second = ingest.ingest_stream(io.BytesIO(data), "dup_b.jpg")
+    assert second.get("duplicate") is True
+    assert first["sha256"] == second["sha256"]
+
+
+def test_keyword_search_finds_by_title():
+    ingest.ingest_stream(io.BytesIO(_img_bytes(color=(200, 50, 90), size=(420, 260))),
+                         "unique_harbor_photo.jpg", title="Unique Harbor Photo")
+    res = search.search(q="harbor")
+    assert res["total"] >= 1
+    assert any("harbor" in (i["title"] or "").lower() for i in res["items"])
+
+
+def test_semantic_search_returns_ranked_results():
+    ingest.ingest_stream(io.BytesIO(_img_bytes(color=(40, 150, 90), size=(330, 500))),
+                         "mountain_trail.jpg", title="Mountain trail in the alpine forest")
+    res = search.search(q="alpine forest trail", mode="semantic")
+    assert res["mode"] == "semantic"
+    assert res["total"] >= 1
+    # scores should be present and sorted descending
+    scores = [i.get("score", 0) for i in res["items"]]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_embedding_similarity_is_symmetric_and_bounded():
+    v = ai.embed("a civic poster about public transit")
+    assert 0.99 <= ai.cosine(v, v) <= 1.01
+    other = ai.embed("a watershed environmental survey diagram")
+    assert -1.01 <= ai.cosine(v, other) <= 1.01
+
+
+def test_fixity_detects_intact_and_corruption():
+    a = ingest.ingest_stream(io.BytesIO(_img_bytes(size=(120, 120))), "fixity.jpg")
+    assert storage.verify_fixity(a["storage_key"], a["sha256"]) is True
+    # corrupt the blob and confirm the check fails
+    storage.blob_path(a["storage_key"]).write_bytes(b"tampered")
+    assert storage.verify_fixity(a["storage_key"], a["sha256"]) is False
+
+
+def test_dublin_core_mapping():
+    a = ingest.ingest_stream(io.BytesIO(_img_bytes(color=(120, 90, 210), size=(360, 360))),
+                             "dc_test.jpg", title="DC Test")
+    dc = standards.dublin_core(a)
+    assert dc["title"] == "DC Test"
+    assert dc["type"] == "image"
+    assert dc["identifier"] == a["uuid"]
+
+
+def test_oai_identify_is_valid_xml():
+    body, status = standards.oai_response({"verb": "Identify"})
+    assert status == 200
+    assert "<repositoryName>" in body and "OAI-PMH" in body

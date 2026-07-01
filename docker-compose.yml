@@ -1,0 +1,21 @@
+# One command to a running DAM:  docker compose up
+# Then open http://localhost:8000 and sign in as admin / admin.
+services:
+  keepstack:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - keepstack-data:/data
+    environment:
+      # Set a real secret + admin password before any non-local use.
+      KEEPSTACK_SECRET_KEY: "change-me-to-a-long-random-string"
+      KEEPSTACK_ADMIN_PASSWORD: "admin"
+      # Optional AI: drop in keys to upgrade tagging/semantic search.
+      KEEPSTACK_AI_ENABLED: "false"
+      # GROQ_API_KEY: ""
+      # COHERE_API_KEY: ""
+    restart: unless-stopped
+
+volumes:
+  keepstack-data:
