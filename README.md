@@ -26,7 +26,7 @@ install that takes one command.
 Pick your path. You do not need to read everything.
 
 - **I want to run it** → the [60-second quickstart](#quickstart) below.
-- **I want the reasoning** → [CASE-STUDY.md](CASE-STUDY.md): the market, the gap,
+- **I want the reasoning** → [DESIGN.md](DESIGN.md): the market, the gap,
   and the decisions behind Keepstack.
 - **I want to understand the code** → [ARCHITECTURE.md](ARCHITECTURE.md), with
   diagrams that render right here on GitHub.
@@ -171,7 +171,7 @@ output.
 
 | Document | What it is |
 |----------|------------|
-| [CASE-STUDY.md](CASE-STUDY.md) | The narrative: market, gap, decisions, results, honest assessment |
+| [DESIGN.md](DESIGN.md) | The narrative: market, gap, decisions, results, honest assessment |
 | [RESEARCH.md](RESEARCH.md) | The top-20 market study, government-focused, citation-backed |
 | [COMPARISON.md](COMPARISON.md) | Head-to-head capability matrix vs seven leading systems |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the code fits together, with diagrams |

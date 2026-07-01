@@ -1,6 +1,6 @@
-# Case study: the state of digital asset management, and building something better
+# Design notes: the market, the gap, and how Keepstack is built
 
-This is the story of Keepstack: why it exists, what the market looks like in 2026,
+This document explains why Keepstack exists: what the DAM market looks like in 2026,
 where the gap is, the decisions that followed, and an honest account of what
 works and what does not yet. If you only read one document in this repository,
 read this one. It links out to the deeper material as you go.
