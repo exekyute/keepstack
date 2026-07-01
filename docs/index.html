@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keepstack - the open DAM that fills the gap</title>
+<meta name="description" content="A free, open-source, AI-native digital asset management system built to archival and government-grade standards. See the market landscape, the capability matrix, and how it is built.">
+<style>
+  :root{
+    --bg:#14171f; --s1:#1b1f2b; --s2:#232838; --line:#2e3346; --accent:#5e84f7;
+    --accent-2:#7d9bf9; --tint:rgba(94,132,247,.16); --tint2:rgba(94,132,247,.07);
+    --text:#e8ecf4; --muted:#9aa6be; --slate:#8a93a6;
+    --sp1:8px; --sp2:16px; --sp3:24px; --sp4:40px; --sp5:64px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6;}
+  a{color:var(--accent);text-decoration:none;} a:hover{text-decoration:underline;}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 var(--sp3);}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  header.nav{position:sticky;top:0;z-index:20;background:rgba(20,23,31,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+  header.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .brand{display:flex;align-items:center;gap:var(--sp2);font-weight:700;}
+  .mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;}
+  nav.links{display:flex;gap:var(--sp3);font-size:14px;} nav.links a{color:var(--muted);} nav.links a:hover{color:var(--text);text-decoration:none;}
+  .hero{padding:var(--sp5) 0 var(--sp4);text-align:center;}
+  .hero h1{font-size:44px;margin:0 0 var(--sp2);line-height:1.1;}
+  .hero .accent{color:var(--accent);}
+  .hero p.lede{font-size:19px;color:var(--muted);max-width:720px;margin:0 auto var(--sp4);}
+  .cta{display:flex;gap:var(--sp2);justify-content:center;flex-wrap:wrap;}
+  .btn{padding:12px 22px;border-radius:10px;border:1px solid var(--line);color:var(--text);font-weight:600;}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn.primary:hover{background:#4d72e6;text-decoration:none;}
+  .btn:hover{background:var(--s2);text-decoration:none;}
+  .shot{margin:var(--sp4) auto 0;max-width:920px;border-radius:14px;border:1px solid var(--line);display:block;width:100%;}
+  section{padding:var(--sp5) 0;border-top:1px solid var(--line);}
+  section h2{font-size:30px;margin:0 0 var(--sp2);}
+  section .sub{color:var(--muted);max-width:760px;margin:0 0 var(--sp4);font-size:17px;}
+  .camps{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3);}
+  .camp{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:var(--sp3);}
+  .camp h3{margin:0 0 var(--sp1);font-size:18px;} .camp .tag{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);}
+  .camp ul{margin:var(--sp2) 0 0;padding-left:18px;color:var(--muted);} .camp li{margin:6px 0;}
+  .gap{margin-top:var(--sp3);background:var(--tint);border:1px solid var(--accent);border-radius:14px;padding:var(--sp3);text-align:center;font-size:17px;}
+  .gap b{color:var(--accent-2);}
+  /* matrix */
+  .legend{display:flex;flex-wrap:wrap;gap:var(--sp2);color:var(--muted);font-size:13px;margin-bottom:var(--sp2);}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .filters{display:flex;flex-wrap:wrap;gap:var(--sp1);margin-bottom:var(--sp2);}
+  .chip{background:transparent;border:1px solid var(--line);color:var(--muted);padding:6px 14px;border-radius:999px;cursor:pointer;font:inherit;}
+  .chip.active{background:var(--tint);border-color:var(--accent);color:var(--accent);font-weight:600;}
+  .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:14px;}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:760px;}
+  thead th{position:sticky;top:0;background:var(--s1);font-size:12px;color:var(--muted);font-weight:600;padding:12px 8px;line-height:1.25;min-width:66px;text-align:center;}
+  thead th.keepstack{color:var(--accent);border-bottom:2px solid var(--accent);}
+  th.cap,td.cap{position:sticky;left:0;background:var(--s1);text-align:left;min-width:236px;max-width:236px;z-index:1;}
+  thead th.cap{z-index:3;}
+  td{padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);vertical-align:middle;}
+  td.cap .lbl{font-weight:600;display:block;} td.cap .why{color:var(--muted);font-size:12px;display:block;margin-top:2px;}
+  td.col-keepstack{background:var(--tint2);}
+  .star{display:block;font-size:11px;font-weight:700;color:var(--accent);}
+  tbody tr:hover td{background:var(--tint2);}
+  .lv{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;font-size:14px;font-weight:700;}
+  .lv-f{background:var(--accent);color:#fff;} .lv-p{background:var(--tint);color:var(--accent-2);border:1px solid var(--accent);}
+  .lv-w{color:var(--slate);border:1px solid var(--slate);} .lv-r{color:var(--accent-2);border:1px dashed var(--accent);}
+  .lv-n{color:var(--muted);} .lv-u{color:var(--muted);opacity:.5;}
+  /* diagrams + gallery */
+  .mermaid{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:var(--sp3);margin-bottom:var(--sp3);}
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp3);}
+  .gallery img{width:100%;border-radius:12px;border:1px solid var(--line);}
+  .doclinks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--sp2);}
+  .doclinks a{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:var(--sp2) var(--sp3);color:var(--text);}
+  .doclinks a:hover{border-color:var(--accent);text-decoration:none;}
+  .doclinks a b{display:block;} .doclinks a span{color:var(--muted);font-size:13px;}
+  footer{border-top:1px solid var(--line);padding:var(--sp4) 0;color:var(--muted);font-size:14px;text-align:center;}
+  @media(max-width:760px){.camps,.gallery{grid-template-columns:1fr;} .hero h1{font-size:34px;} nav.links{display:none;}}
+</style>
+</head>
+<body>
+<a class="sr-only" href="#matrix">Skip to the capability matrix</a>
+
+<header class="nav"><div class="wrap">
+  <div class="brand"><span class="mark">K</span> Keepstack</div>
+  <nav class="links">
+    <a href="#landscape">Landscape</a><a href="#matrix">Comparison</a>
+    <a href="#build">How it's built</a><a href="#docs">Docs</a>
+    <a href="https://github.com/exekyute/keepstack">GitHub</a>
+  </nav>
+</div></header>
+
+<div class="wrap">
+
+  <section class="hero" style="border-top:none;">
+    <h1>The open DAM that fills the <span class="accent">gap</span></h1>
+    <p class="lede">A free, self-hostable digital asset management system that combines archival-grade metadata standards with modern local AI and a clean interface. The two things the market keeps separate, in one tool, installable in one command.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/exekyute/keepstack">View on GitHub</a>
+      <a class="btn" href="../CASE-STUDY.md">Read the case study</a>
+      <a class="btn" href="#matrix">See the matrix</a>
+    </div>
+    <img class="shot" src="screenshots/02-library.png" alt="The Keepstack library view: a grid of assets with a facet sidebar and search bar">
+  </section>
+
+  <section id="landscape">
+    <h2>The state of DAM in 2026</h2>
+    <p class="sub">A survey of the twenty systems that matter most for government, archival, and institutional buyers found a market split into two camps that never met. The full, citation-backed study is in <a href="../RESEARCH.md">RESEARCH.md</a>.</p>
+    <div class="camps">
+      <div class="camp">
+        <span class="tag">Camp A</span>
+        <h3>Standards-rich heritage tools</h3>
+        <p style="color:var(--muted);margin:6px 0 0;">ResourceSpace, DSpace, Archivematica, Preservica, Axiell. Run national archives, libraries, and museums.</p>
+        <ul><li>Deep standards: Dublin Core, METS, PREMIS, EAD, OAI-PMH, IIIF</li><li>Real digital preservation</li><li>But: hard installs, dated interfaces, little or no AI</li></ul>
+      </div>
+      <div class="camp">
+        <span class="tag">Camp B</span>
+        <h3>AI-rich media libraries</h3>
+        <p style="color:var(--muted);margin:6px 0 0;">Immich, PhotoPrism, and the commercial Bynder and Adobe. Great tagging and UX.</p>
+        <ul><li>Semantic search, auto-tagging, clean modern interfaces</li><li>Easy to run (the open-source ones)</li><li>But: no archival standards, or not free and self-hostable</li></ul>
+      </div>
+    </div>
+    <div class="gap">No open-source tool holds <b>archival standards</b>, <b>modern AI and UX</b>, and <b>free easy self-hosting</b> at once. That empty intersection is what Keepstack is built to occupy.</div>
+  </section>
+
+  <section id="matrix">
+    <h2>How Keepstack compares</h2>
+    <p class="sub">Keepstack next to seven leading systems across 21 capabilities. Keepstack was graded against its own source code, competitors against the research, then audited for overclaiming. It deliberately shows where Keepstack is only partial or still on the roadmap. Full detail in <a href="../COMPARISON.md">COMPARISON.md</a>.</p>
+    <div class="legend" aria-hidden="true">
+      <span><i class="lv lv-f">&#10003;</i> full</span><span><i class="lv lv-p">&#9680;</i> partial</span>
+      <span><i class="lv lv-w">$</i> paywalled</span><span><i class="lv lv-r">&#9684;</i> roadmap</span>
+      <span><i class="lv lv-n">&#10007;</i> none</span><span><i class="lv lv-u">&#183;</i> not stated</span>
+    </div>
+    <div class="filters" id="filters">
+      <button class="chip active" data-g="all">All 21</button>
+      <button class="chip" data-g="F">Foundation &amp; cost</button>
+      <button class="chip" data-g="S">Metadata &amp; standards</button>
+      <button class="chip" data-g="A">AI &amp; search</button>
+      <button class="chip" data-g="G">Governance</button>
+    </div>
+    <div class="scroller"><table id="mtx"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="build">
+    <h2>How it's built</h2>
+    <p class="sub">One Python process, one SQLite database, one blob directory, four runtime dependencies. Full detail and more diagrams in <a href="../ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
+    <pre class="mermaid">
+flowchart LR
+  UI["Web client<br/>(zero-build SPA)"] -->|HTTP| API["REST API"]
+  API --> ING["Ingest"] & SRCH["Search"] & STD["Standards<br/>DC / OAI-PMH / IIIF"] & AUTH["Auth + audit"]
+  ING --> AI["AI (optional)"]
+  ING --> DB[("SQLite + FTS5")] & BLOB[["Content-addressable<br/>blob store"]]
+  SRCH --> DB
+  API --> BLOB
+    </pre>
+    <pre class="mermaid">
+sequenceDiagram
+  participant U as Client
+  participant I as Ingest
+  participant S as Storage
+  participant DB as SQLite
+  U->>I: upload file
+  I->>S: hash + store (SHA-256)
+  alt identical content exists
+    S-->>I: reuse blob (deduped)
+  else new content
+    I->>DB: metadata + thumbnail + tags
+    I->>DB: FTS index + embedding
+  end
+  I-->>U: asset ready
+    </pre>
+  </section>
+
+  <section id="see">
+    <h2>See it running</h2>
+    <p class="sub">Real captures of the app, not mockups.</p>
+    <div class="gallery">
+      <img src="screenshots/04-asset-detail.png" alt="Asset detail drawer with a large preview and inline metadata editing">
+      <img src="screenshots/03-semantic-search.png" alt="Semantic search results for coastal environment water">
+      <img src="screenshots/05-dashboard.png" alt="Dashboard with asset counts and a fixity check panel">
+      <img src="screenshots/06-audit-log.png" alt="Audit log listing timestamped actions">
+    </div>
+  </section>
+
+  <section id="docs">
+    <h2>Read more</h2>
+    <p class="sub">Everything is one click deep, nothing is dumped at once.</p>
+    <div class="doclinks">
+      <a href="../CASE-STUDY.md"><b>Case study</b><span>Market, gap, decisions, results</span></a>
+      <a href="../RESEARCH.md"><b>Research</b><span>Top-20 study, citation-backed</span></a>
+      <a href="../COMPARISON.md"><b>Comparison</b><span>The full capability matrix</span></a>
+      <a href="../ARCHITECTURE.md"><b>Architecture</b><span>How the code fits together</span></a>
+      <a href="DAM-101.md"><b>DAM 101</b><span>The concepts in plain language</span></a>
+      <a href="decisions/"><b>Decision records</b><span>Why the big choices were made</span></a>
+      <a href="../ROADMAP.md"><b>Roadmap</b><span>Shipped vs planned</span></a>
+      <a href="../DEVLOG.md"><b>Devlog</b><span>Build notes in order</span></a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Keepstack is free and open source (MIT). Copyright (c) 2026 Kevin Yu
+  (<a href="https://github.com/exekyute">github.com/exekyute</a>).
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) mermaid.initialize({startOnLoad:true, theme:"dark", themeVariables:{primaryColor:"#232838", primaryTextColor:"#e8ecf4", lineColor:"#5e84f7", primaryBorderColor:"#5e84f7"}});
+</script>
+<script>
+(function(){
+  var ENT=["Keepstack","Resource Space","DSpace","Immich","Bynder","Adobe AEM","Preservica","Orange Logic"];
+  var ROWS=[
+    ["One-command install","#1 reason OSS DAM projects stall is a hard install","F",["f","p","n","f","n","n","u","n"]],
+    ["Free, no per-seat pricing","The loudest buyer complaint","F",["f","f","f","f","n","n","p","n"]],
+    ["Self-host / data sovereignty","Agencies often can't use multi-tenant SaaS","F",["f","f","f","f","n","f","p","p"]],
+    ["Open API / no lock-in","Full export protects data over decades","F",["f","f","u","f","u","u","u","u"]],
+    ["Dublin Core metadata","Baseline standard, mandatory for OAI-PMH","S",["f","f","f","n","u","u","f","u"]],
+    ["EXIF / IPTC / XMP extraction","Archival workflows depend on it","S",["p","f","p","p","p","f","u","u"]],
+    ["OAI-PMH harvesting","Lets aggregators mirror the catalog","S",["f","f","f","n","n","u","f","u"]],
+    ["IIIF Image API","Deep-zoom delivery from one master","S",["p","u","f","n","n","u","f","u"]],
+    ["Digital preservation (fixity)","Readable in 50+ years","S",["p","u","p","n","n","u","f","f"]],
+    ["Content-addressable dedup","Store identical content once","S",["f","u","u","f","p","u","u","u"]],
+    ["AI auto-tagging","Closes the gap when nobody tags","A",["p","f","n","f","w","f","u","f"]],
+    ["Semantic / NL search","Finds assets nobody tagged","A",["p","p","r","f","w","f","u","f"]],
+    ["Faceted + full-text search","Precise drill-down retrieval","A",["f","f","p","p","f","f","u","f"]],
+    ["OCR / text-in-image","Makes scanned docs findable","A",["r","f","u","u","w","f","u","u"]],
+    ["Asset versioning","Change history + revert","G",["f","f","f","n","f","u","u","u"]],
+    ["Role-based access control","Governance table stakes","G",["f","f","f","p","f","f","u","f"]],
+    ["Audit log / chain of custody","Who-did-what trail","G",["f","u","u","u","u","u","f","f"]],
+    ["Controlled / expiring shares","Distribute without losing control","G",["f","u","u","p","f","u","p","u"]],
+    ["Records retention / legal hold","Govt records carry mandated retention","G",["p","u","u","n","u","u","f","p"]],
+    ["Accessibility (alt-text + VPAT)","A 508/WCAG VPAT is a hard gate","G",["p","u","n","u","n","f","f","f"]],
+    ["SSO (SAML/OIDC) / SCIM","Enterprise identity integration","G",["r","u","u","p","f","f","f","f"]]
+  ];
+  var SYM={f:["✓","lv-f","Full"],p:["◐","lv-p","Partial"],w:["$","lv-w","Paywalled"],r:["◔","lv-r","Roadmap"],n:["✗","lv-n","None"],u:["·","lv-u","Not stated"]};
+  var tbl=document.getElementById("mtx"), tr=document.createElement("tr");
+  var cap=document.createElement("th"); cap.className="cap"; cap.textContent="Capability  /  why it matters"; tr.appendChild(cap);
+  ENT.forEach(function(e,i){var th=document.createElement("th"); if(i===0){th.className="keepstack"; th.innerHTML="<span class='star'>★ this build</span>Keepstack";} else th.textContent=e; tr.appendChild(th);});
+  tbl.querySelector("thead").appendChild(tr);
+  var tb=tbl.querySelector("tbody");
+  ROWS.forEach(function(r){
+    var row=document.createElement("tr"); row.dataset.g=r[2];
+    var c=document.createElement("td"); c.className="cap"; c.innerHTML="<span class='lbl'>"+r[0]+"</span><span class='why'>"+r[1]+"</span>"; row.appendChild(c);
+    r[3].forEach(function(code,i){var td=document.createElement("td"); if(i===0)td.className="col-keepstack"; var s=SYM[code]||SYM.u; td.innerHTML="<span class='lv "+s[1]+"' title='"+ENT[i]+": "+s[2]+"'>"+s[0]+"</span>"; row.appendChild(td);});
+    tb.appendChild(row);
+  });
+  document.querySelectorAll("#filters .chip").forEach(function(ch){ch.addEventListener("click",function(){
+    document.querySelectorAll("#filters .chip").forEach(function(x){x.classList.remove("active");}); ch.classList.add("active");
+    var g=ch.dataset.g; tb.querySelectorAll("tr").forEach(function(row){row.style.display=(g==="all"||row.dataset.g===g)?"":"none";});
+  });});
+})();
+</script>
+</body>
+</html>
