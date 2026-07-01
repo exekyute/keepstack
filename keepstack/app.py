@@ -17,7 +17,7 @@ from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
                                PlainTextResponse, Response)
 from fastapi.staticfiles import StaticFiles
 
-from . import ingest, search, standards, storage, thumbnails
+from . import __version__, ingest, search, standards, storage, thumbnails
 from .audit import log, now_iso
 from .auth import (authenticate, hash_password, make_token, role_at_least,
                    verify_password, verify_token)
@@ -628,6 +628,12 @@ def iiif_image(uuid: str, region: str, size: str, rotation: str, quality: str, f
     if data is None:
         raise HTTPException(415, "IIIF available for images only")
     return Response(content=data, media_type="image/jpeg")
+
+
+@app.get("/api/version")
+def version():
+    """Report the running version (unauthenticated, for monitoring)."""
+    return {"name": "keepstack", "version": __version__}
 
 
 @app.get("/healthz", response_class=PlainTextResponse)

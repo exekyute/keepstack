@@ -110,3 +110,10 @@ def test_oai_identify_is_valid_xml():
     body, status = standards.oai_response({"verb": "Identify"})
     assert status == 200
     assert "<repositoryName>" in body and "OAI-PMH" in body
+
+
+def test_version_endpoint_reports_name_and_version():
+    from keepstack.app import version
+    payload = version()
+    assert payload["name"] == "keepstack"
+    assert payload["version"]
