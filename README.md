@@ -4,12 +4,13 @@
 
 **A free, open-source, AI-native digital asset management system, built to archival and government-grade standards.**
 
+[![CI](https://github.com/exekyute/keepstack/actions/workflows/ci.yml/badge.svg)](https://github.com/exekyute/keepstack/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Runtime deps](https://img.shields.io/badge/runtime%20deps-4-green)
 ![Status](https://img.shields.io/badge/status-v0.1.0-blueviolet)
 
-![Keepstack library view](docs/screenshots/02-library.png)
+![Keepstack demo](docs/screenshots/demo.gif)
 
 </div>
 
