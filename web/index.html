@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Keepstack - Digital Asset Management</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%235e84f7'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'>K</text></svg>">
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="login" class="login-wrap hidden">
+    <form id="login-form" class="login-card">
+      <div class="brand-mark">K</div>
+      <h1>Keepstack</h1>
+      <p class="muted">Open digital asset management</p>
+      <label>Username<input id="login-user" autocomplete="username" value="admin"></label>
+      <label>Password<input id="login-pass" type="password" autocomplete="current-password" value="admin"></label>
+      <button class="btn btn-primary" type="submit">Sign in</button>
+      <p id="login-error" class="error hidden"></p>
+    </form>
+  </div>
+
+  <!-- App shell -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand-mark small">K</div>
+        <strong>Keepstack</strong>
+      </div>
+      <div class="search-box">
+        <input id="search" placeholder="Search assets, tags, metadata...">
+        <select id="search-mode" title="Search mode">
+          <option value="keyword">Keyword</option>
+          <option value="semantic">Semantic</option>
+        </select>
+      </div>
+      <div class="topbar-right">
+        <button id="btn-upload" class="btn btn-primary">Upload</button>
+        <div class="user-menu">
+          <span id="user-label" class="muted"></span>
+          <button id="btn-logout" class="btn btn-ghost">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <nav class="nav">
+          <button class="nav-item active" data-view="library">Library</button>
+          <button class="nav-item" data-view="collections">Collections</button>
+          <button class="nav-item admin-only" data-view="dashboard">Dashboard</button>
+          <button class="nav-item admin-only" data-view="users">Users</button>
+          <button class="nav-item admin-only" data-view="audit">Audit log</button>
+        </nav>
+
+        <div id="facets" class="facets">
+          <div class="facet-group">
+            <h4>Media type</h4>
+            <ul id="facet-media"></ul>
+          </div>
+          <div class="facet-group">
+            <h4>Top tags</h4>
+            <ul id="facet-tags"></ul>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div id="view-library" class="view">
+          <div class="view-head">
+            <h2 id="result-title">Library</h2>
+            <div class="view-controls">
+              <span id="active-filter" class="chip hidden"></span>
+              <select id="sort">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="name">Name</option>
+                <option value="largest">Largest</option>
+              </select>
+            </div>
+          </div>
+          <div id="grid" class="grid"></div>
+          <div id="empty" class="empty hidden">No assets yet. Click Upload to get started.</div>
+        </div>
+
+        <div id="view-collections" class="view hidden">
+          <div class="view-head">
+            <h2>Collections</h2>
+            <button id="btn-new-collection" class="btn">New collection</button>
+          </div>
+          <div id="collection-list" class="collection-list"></div>
+        </div>
+
+        <div id="view-dashboard" class="view hidden">
+          <div class="view-head"><h2>Dashboard</h2></div>
+          <div id="stat-cards" class="stat-cards"></div>
+          <div class="panel">
+            <h3>Integrity</h3>
+            <p class="muted">Re-hash every stored blob against its recorded SHA-256 (digital preservation fixity check).</p>
+            <button id="btn-fixity" class="btn">Run fixity check</button>
+            <div id="fixity-result" class="muted"></div>
+          </div>
+        </div>
+
+        <div id="view-users" class="view hidden">
+          <div class="view-head"><h2>Users</h2><button id="btn-new-user" class="btn">Add user</button></div>
+          <table class="table"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Active</th><th>Last login</th></tr></thead>
+            <tbody id="user-rows"></tbody></table>
+        </div>
+
+        <div id="view-audit" class="view hidden">
+          <div class="view-head"><h2>Audit log</h2></div>
+          <table class="table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Target</th><th>Detail</th><th>IP</th></tr></thead>
+            <tbody id="audit-rows"></tbody></table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Asset detail drawer -->
+  <div id="drawer" class="drawer hidden">
+    <div class="drawer-backdrop"></div>
+    <div class="drawer-panel">
+      <button id="drawer-close" class="drawer-close">&times;</button>
+      <div id="drawer-body"></div>
+    </div>
+  </div>
+
+  <!-- Upload modal -->
+  <div id="upload-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <h3>Upload assets</h3>
+      <div id="dropzone" class="dropzone">
+        <p>Drag files here or click to browse</p>
+        <input id="file-input" type="file" multiple hidden>
+      </div>
+      <label class="check"><input type="checkbox" id="ai-toggle" checked> Run AI enrichment (tags, alt-text)</label>
+      <div id="upload-list" class="upload-list"></div>
+      <div class="modal-actions">
+        <button id="upload-cancel" class="btn btn-ghost">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
