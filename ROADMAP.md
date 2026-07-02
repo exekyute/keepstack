@@ -26,7 +26,8 @@ Checked items are built and verified; unchecked items are planned.
 
 ## Next: deepen the standards
 
-- [ ] IIIF Image API level 2 (region and rotation), plus a Presentation API manifest
+- [x] IIIF Image API level 2: region, rotation, and best-fit sizing (contributed in #7)
+- [ ] IIIF Presentation API manifest
 - [ ] OAI-PMH resumption tokens and selective harvesting by set
 - [ ] METS packaging with embedded PREMIS events for preservation exchange
 - [ ] Parse XMP into structured fields rather than storing it raw
@@ -44,7 +45,7 @@ Checked items are built and verified; unchecked items are planned.
 
 - [ ] OAIS-style active format migration with a format policy registry
 - [ ] Background workers for video transcoding and document rendering
-- [ ] Scheduled orphan-blob garbage collection
+- [x] Orphan-blob garbage collection via `python -m keepstack gc` (contributed in #6)
 - [ ] Optional Postgres backend for high write concurrency
 
 Have a use case that reorders this? Open an issue.
