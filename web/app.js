@@ -103,10 +103,11 @@ function renderFacets(facets) {
 const drawer = $("#drawer");
 $("#drawer-close").addEventListener("click", closeDrawer);
 $(".drawer-backdrop").addEventListener("click", closeDrawer);
-function closeDrawer() { drawer.classList.add("hidden"); }
+function closeDrawer() { drawer.classList.add("hidden"); document.body.classList.remove("modal-open"); }
 
 async function openAsset(uuid) {
   drawer.classList.remove("hidden");
+  document.body.classList.add("modal-open");
   $("#drawer-body").innerHTML = '<p class="muted">Loading...</p>';
   const [d, meta, sim] = await Promise.all([
     api("/api/assets/" + uuid),
@@ -194,9 +195,9 @@ async function openAsset(uuid) {
 
 // ---------- upload ----------
 const uploadModal = $("#upload-modal");
-$("#btn-upload").addEventListener("click", () => uploadModal.classList.remove("hidden"));
-$("#upload-cancel").addEventListener("click", () => { uploadModal.classList.add("hidden"); loadLibrary(); });
-$(".modal-backdrop").addEventListener("click", () => uploadModal.classList.add("hidden"));
+$("#btn-upload").addEventListener("click", () => { uploadModal.classList.remove("hidden"); document.body.classList.add("modal-open"); });
+$("#upload-cancel").addEventListener("click", () => { uploadModal.classList.add("hidden"); document.body.classList.remove("modal-open"); loadLibrary(); });
+$(".modal-backdrop").addEventListener("click", () => { uploadModal.classList.add("hidden"); document.body.classList.remove("modal-open"); });
 const dz = $("#dropzone"), fileInput = $("#file-input");
 dz.addEventListener("click", () => fileInput.click());
 dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag"); });

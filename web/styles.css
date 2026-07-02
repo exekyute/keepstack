@@ -21,8 +21,15 @@
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--base-3) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--base-3); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background-color: var(--muted); }
 html, body { margin: 0; height: 100%; }
+html { scrollbar-gutter: stable; }
+/* one scroll context while an overlay is open */
+body.modal-open { overflow: hidden; }
 body { background: var(--base-0); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; }
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
@@ -78,7 +85,11 @@ button, input, select { font-family: inherit; font-size: inherit; }
   flex: 1; background: var(--base-0); border: 1px solid var(--base-3); color: var(--text);
   padding: var(--s2) var(--s2); border-radius: var(--radius-sm);
 }
-.search-box select { background: var(--base-0); border: 1px solid var(--base-3); color: var(--text); border-radius: var(--radius-sm); padding: 0 var(--s1); }
+.search-box select {
+  background: var(--base-0) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364708a' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid var(--base-3); color: var(--text); border-radius: var(--radius-sm);
+  padding: 0 var(--s4) 0 var(--s2); appearance: none; -webkit-appearance: none; cursor: pointer;
+}
 .topbar-right { display: flex; align-items: center; justify-content: flex-end; gap: var(--s2); }
 .user-menu { display: flex; align-items: center; gap: var(--s2); }
 
@@ -109,7 +120,11 @@ button, input, select { font-family: inherit; font-size: inherit; }
 .view-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s3); gap: var(--s2); }
 .view-head h2 { margin: 0; font-size: 22px; }
 .view-controls { display: flex; align-items: center; gap: var(--s2); }
-.view-controls select, .table select { background: var(--base-1); border: 1px solid var(--base-3); color: var(--text); border-radius: var(--radius-sm); padding: var(--s1) var(--s2); }
+.view-controls select, .table select {
+  background: var(--base-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364708a' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid var(--base-3); color: var(--text); border-radius: var(--radius-sm);
+  padding: var(--s1) var(--s4) var(--s1) var(--s2); appearance: none; -webkit-appearance: none; cursor: pointer;
+}
 .chip { background: var(--accent-dim); color: var(--accent); padding: 6px var(--s2); border-radius: 999px; font-size: 13px; cursor: pointer; }
 .chip::after { content: " \00d7"; }
 

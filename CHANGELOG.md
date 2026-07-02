@@ -19,6 +19,9 @@ semantic versioning.
   with an indigo accent, applied across the app, placeholders, and share pages.
 - Centered the captions in generated seed images so square thumbnails no
   longer crop them.
+- Tidied the chrome: background scrolling now locks while the drawer or upload
+  modal is open (one scrollbar instead of two), scrollbars are slim and themed,
+  and the dropdown controls got a custom chevron with roomier padding.
 
 ## [0.1.0] - 2026-06-28
 
