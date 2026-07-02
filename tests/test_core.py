@@ -12,7 +12,7 @@ os.environ["KEEPSTACK_AI_ENABLED"] = "false"
 
 from PIL import Image  # noqa: E402
 
-from keepstack import ai, ingest, search, standards, storage  # noqa: E402
+from keepstack import ai, ingest, search, standards, storage, thumbnails  # noqa: E402
 from keepstack.auth import (hash_password, make_token, role_at_least,  # noqa: E402
                          verify_password, verify_token)
 from keepstack.db import get_conn, init_db  # noqa: E402
@@ -21,6 +21,16 @@ from keepstack.db import get_conn, init_db  # noqa: E402
 def _img_bytes(color=(90, 130, 240), size=(400, 300)):
     buf = io.BytesIO()
     Image.new("RGB", size, color).save(buf, format="JPEG")
+    return buf.getvalue()
+
+
+def _split_img_bytes():
+    buf = io.BytesIO()
+    img = Image.new("RGB", (100, 60), (20, 40, 80))
+    for x in range(100):
+        for y in range(60):
+            img.putpixel((x, y), (220, 30, 30) if x < 50 else (30, 180, 80))
+    img.save(buf, format="JPEG")
     return buf.getvalue()
 
 
@@ -104,6 +114,30 @@ def test_dublin_core_mapping():
     assert dc["title"] == "DC Test"
     assert dc["type"] == "image"
     assert dc["identifier"] == a["uuid"]
+
+
+def test_iiif_info_advertises_level_2():
+    info = standards.iiif_info({"uuid": "asset-1", "width": 100, "height": 60})
+    assert info["profile"] == "level2"
+    assert info["tiles"][0]["width"] == 512
+
+
+def test_iiif_rendition_crops_and_rotates():
+    sha, key, _ = storage.store_bytes(_split_img_bytes(), "jpg")
+
+    data = thumbnails.iiif_rendition(sha, key, "image", "10,20,30,20", "full", "90")
+    img = Image.open(io.BytesIO(data))
+
+    assert img.size == (20, 30)
+
+
+def test_iiif_rendition_supports_percent_region_and_best_fit_size():
+    sha, key, _ = storage.store_bytes(_split_img_bytes(), "jpg")
+
+    data = thumbnails.iiif_rendition(sha, key, "image", "pct:0,0,50,100", "!25,25", "0")
+    img = Image.open(io.BytesIO(data))
+
+    assert img.size == (21, 25)
 
 
 def test_oai_identify_is_valid_xml():

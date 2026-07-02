@@ -7,6 +7,7 @@ are produced on demand and cached in the content-addressable thumb store.
 """
 from __future__ import annotations
 
+import hashlib
 import io
 from pathlib import Path
 from typing import Optional
@@ -81,6 +82,126 @@ def rendition(sha: str, blob_key: str, media_type: str, ext: str, max_edge: int)
     if out.exists():
         return out.read_bytes()
     data = make_thumbnail(storage.blob_path(blob_key), media_type, ext, max_edge=max_edge)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(data)
+    return data
+
+
+def _parse_region(img: Image.Image, region: str) -> tuple[int, int, int, int]:
+    width, height = img.size
+    if region == "full":
+        return 0, 0, width, height
+    if region == "square":
+        edge = min(width, height)
+        return (width - edge) // 2, (height - edge) // 2, edge, edge
+
+    percent = region.startswith("pct:")
+    raw = region[4:] if percent else region
+    parts = raw.split(",")
+    if len(parts) != 4:
+        raise ValueError("IIIF region must be full, square, x,y,w,h, or pct:x,y,w,h")
+
+    try:
+        values = [float(p) for p in parts]
+    except ValueError as exc:
+        raise ValueError("IIIF region values must be numeric") from exc
+
+    if percent:
+        x = round(width * values[0] / 100)
+        y = round(height * values[1] / 100)
+        w = round(width * values[2] / 100)
+        h = round(height * values[3] / 100)
+    else:
+        x, y, w, h = [round(v) for v in values]
+
+    if x < 0 or y < 0 or w <= 0 or h <= 0 or x >= width or y >= height:
+        raise ValueError("IIIF region is outside the image")
+
+    w = min(w, width - x)
+    h = min(h, height - y)
+    return x, y, w, h
+
+
+def _apply_size(img: Image.Image, size: str) -> Image.Image:
+    if size in ("full", "max"):
+        return img
+
+    best_fit = size.startswith("!")
+    raw = size[1:] if best_fit else size
+    parts = raw.split(",")
+    if len(parts) != 2:
+        raise ValueError("IIIF size must be full, max, w,, ,h, w,h, or !w,h")
+
+    try:
+        target_w = int(parts[0]) if parts[0] else None
+        target_h = int(parts[1]) if parts[1] else None
+    except ValueError as exc:
+        raise ValueError("IIIF size values must be integers") from exc
+
+    if target_w is not None and target_w <= 0:
+        raise ValueError("IIIF width must be positive")
+    if target_h is not None and target_h <= 0:
+        raise ValueError("IIIF height must be positive")
+    if target_w is None and target_h is None:
+        raise ValueError("IIIF size must include width or height")
+
+    width, height = img.size
+    if target_w is None:
+        target_w = max(1, round(width * target_h / height))
+    elif target_h is None:
+        target_h = max(1, round(height * target_w / width))
+    elif best_fit:
+        scale = min(target_w / width, target_h / height)
+        target_w = max(1, round(width * scale))
+        target_h = max(1, round(height * scale))
+
+    return img.resize((target_w, target_h), Image.LANCZOS)
+
+
+def _apply_rotation(img: Image.Image, rotation: str) -> Image.Image:
+    mirror = rotation.startswith("!")
+    raw = rotation[1:] if mirror else rotation
+    try:
+        degrees = float(raw)
+    except ValueError as exc:
+        raise ValueError("IIIF rotation must be numeric") from exc
+
+    if mirror:
+        img = ImageOps.mirror(img)
+    if degrees % 360:
+        img = img.rotate(-degrees, expand=True, resample=Image.BICUBIC)
+    return img
+
+
+def iiif_rendition(
+    sha: str,
+    blob_key: str,
+    media_type: str,
+    region: str,
+    size: str,
+    rotation: str,
+) -> Optional[bytes]:
+    """IIIF Image API level-2 region, size, and rotation rendition."""
+    if media_type != "image":
+        return None
+
+    token = hashlib.sha256(f"{region}|{size}|{rotation}".encode("utf-8")).hexdigest()[:16]
+    key = f"{sha[:2]}/{sha[2:4]}/{sha}_iiif_{token}.jpg"
+    out = storage.thumb_path(key)
+    if out.exists():
+        return out.read_bytes()
+
+    with Image.open(storage.blob_path(blob_key)) as img:
+        img = ImageOps.exif_transpose(img)
+        img = img.convert("RGB") if img.mode not in ("RGB", "L") else img
+        x, y, w, h = _parse_region(img, region)
+        img = img.crop((x, y, x + w, y + h))
+        img = _apply_size(img, size)
+        img = _apply_rotation(img, rotation)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=82)
+        data = buf.getvalue()
+
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(data)
     return data
