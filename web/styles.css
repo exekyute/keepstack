@@ -1,23 +1,23 @@
-/* Keepstack UI - two-tone (navy base + indigo accent), 8px spacing rhythm */
+/* Keepstack UI - two-tone (white/gray base + indigo accent), 8px spacing rhythm */
 :root {
   /* tones */
-  --base-0: #14171f;   /* app background */
-  --base-1: #1b1f2b;   /* panels */
-  --base-2: #232838;   /* raised */
-  --base-3: #2e3346;   /* borders / hover */
-  --accent: #5e84f7;   /* the single accent */
-  --accent-soft: #7d9bf9;
-  --accent-dim: rgba(94, 132, 247, 0.16);
+  --base-0: #f4f6fa;   /* app background */
+  --base-1: #ffffff;   /* panels */
+  --base-2: #eef1f6;   /* raised */
+  --base-3: #dde3ec;   /* borders / hover */
+  --accent: #4d68d6;   /* the single accent */
+  --accent-soft: #3b53c0;
+  --accent-dim: rgba(77, 104, 214, 0.12);
 
-  --text: #e8ecf4;
-  --muted: #9aa6be;
-  --danger: #f2607a;
-  --ok: #46c08a;
+  --text: #1d2433;
+  --muted: #64708a;
+  --danger: #c73553;
+  --ok: #178a5e;
 
   /* spacing scale (multiples of 8) */
   --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 48px;
   --radius: 12px; --radius-sm: 8px;
-  --shadow: 0 12px 40px rgba(0,0,0,0.45);
+  --shadow: 0 12px 32px rgba(29, 36, 51, 0.10);
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -38,7 +38,7 @@ button, input, select { font-family: inherit; font-size: inherit; }
 }
 .btn:hover { background: var(--base-3); }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-.btn-primary:hover { background: #4d72e6; }
+.btn-primary:hover { background: #3e57c4; }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
 .btn-ghost:hover { background: var(--base-2); color: var(--text); }
 .btn-danger { color: var(--danger); border-color: var(--base-3); }
@@ -129,7 +129,7 @@ button, input, select { font-family: inherit; font-size: inherit; }
 
 /* ---------- drawer (asset detail) ---------- */
 .drawer { position: fixed; inset: 0; z-index: 40; }
-.drawer-backdrop, .modal-backdrop { position: absolute; inset: 0; background: rgba(8,10,16,0.6); }
+.drawer-backdrop, .modal-backdrop { position: absolute; inset: 0; background: rgba(29,36,51,0.35); }
 .drawer-panel {
   position: absolute; top: 0; right: 0; height: 100%; width: min(720px, 96vw);
   background: var(--base-1); border-left: 1px solid var(--base-3); box-shadow: var(--shadow);

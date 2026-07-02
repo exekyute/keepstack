@@ -13,6 +13,13 @@ semantic versioning.
 - Added `python -m keepstack gc` to remove blob files no longer referenced by
   active assets or their version history.
 
+### Changed
+
+- Switched the web interface to a light theme: white and soft-gray surfaces
+  with an indigo accent, applied across the app, placeholders, and share pages.
+- Centered the captions in generated seed images so square thumbnails no
+  longer crop them.
+
 ## [0.1.0] - 2026-06-28
 
 The first working release. A complete DAM core, built to sit in the gap between

@@ -453,11 +453,11 @@ def public_share(token: str):
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{a['title']} - Shared via Keepstack</title>
-<style>body{{margin:0;font-family:system-ui,sans-serif;background:#181c26;color:#e8ecf4;
+<style>body{{margin:0;font-family:system-ui,sans-serif;background:#f4f6fa;color:#1d2433;
 display:flex;flex-direction:column;align-items:center;gap:24px;padding:48px 16px}}
-img{{max-width:min(900px,92vw);border-radius:12px}}
-.btn{{background:#5e84f7;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none}}
-.muted{{color:#9aa6be}}</style></head>
+img{{max-width:min(900px,92vw);border-radius:12px;border:1px solid #dde3ec}}
+.btn{{background:#4d68d6;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none}}
+.muted{{color:#64708a}}</style></head>
 <body><h2>{a['title']}</h2>
 <img src="/s/{token}/preview" alt="{a.get('alt_text') or a['title']}">
 <p class="muted">{a.get('description') or ''}</p>{dl}

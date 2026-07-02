@@ -20,8 +20,8 @@ THUMB_MAX = 512        # longest edge for grid thumbnails
 PREVIEW_MAX = 1600     # longest edge for the detail-view preview
 
 # Two-tone palette mirrored from the web UI so placeholders match the app.
-_BASE = (24, 28, 38)
-_ACCENT = (94, 132, 247)
+_BASE = (238, 241, 246)
+_ACCENT = (77, 104, 214)
 _GLYPH = {
     "video": "▶",
     "audio": "♪",
@@ -41,7 +41,7 @@ def _placeholder(media_type: str, label: str) -> bytes:
         font = ImageFont.load_default()
         small = ImageFont.load_default()
     draw.text((THUMB_MAX / 2, THUMB_MAX / 2 - 30), glyph, font=font, fill=_ACCENT, anchor="mm")
-    draw.text((THUMB_MAX / 2, THUMB_MAX - 70), label[:22], font=small, fill=(150, 160, 180), anchor="mm")
+    draw.text((THUMB_MAX / 2, THUMB_MAX - 70), label[:22], font=small, fill=(100, 112, 138), anchor="mm")
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=85)
     return buf.getvalue()
