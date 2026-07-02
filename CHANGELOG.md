@@ -8,6 +8,8 @@ semantic versioning.
 
 ### Added
 
+- Parse common XMP RDF fields into structured metadata, catalog fields, and
+  full-text search.
 - Advertise IIIF Image API level 2 and support region cropping, percent
   regions, best-fit sizing, and rotation for IIIF image requests.
 - Added `python -m keepstack gc` to remove blob files no longer referenced by
