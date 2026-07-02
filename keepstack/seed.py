@@ -56,7 +56,8 @@ def _make_image(idx: int, label: str) -> bytes:
         font = ImageFont.truetype("arial.ttf", 44)
     except Exception:
         font = ImageFont.load_default()
-    draw.text((40, h - 105), label, font=font, fill=(255, 255, 255))
+    # Centered so the caption survives the square centre-crop used by thumbnails.
+    draw.text((w / 2, h - 75), label, font=font, fill=(255, 255, 255), anchor="mm")
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=88)
     return buf.getvalue()
