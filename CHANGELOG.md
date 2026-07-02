@@ -10,6 +10,8 @@ semantic versioning.
 
 - Advertise IIIF Image API level 2 and support region cropping, percent
   regions, best-fit sizing, and rotation for IIIF image requests.
+- Added `python -m keepstack gc` to remove blob files no longer referenced by
+  active assets or their version history.
 
 ## [0.1.0] - 2026-06-28
 

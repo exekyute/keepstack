@@ -107,6 +107,45 @@ def test_fixity_detects_intact_and_corruption():
     assert storage.verify_fixity(a["storage_key"], a["sha256"]) is False
 
 
+def test_gc_removes_blob_after_asset_delete():
+    a = ingest.ingest_stream(io.BytesIO(_img_bytes(color=(5, 20, 250), size=(111, 111))), "gc-delete.jpg")
+    path = storage.blob_path(a["storage_key"])
+    assert path.exists()
+
+    conn = get_conn()
+    conn.execute("UPDATE assets SET status = 'deleted' WHERE id = ?", (a["id"],))
+    conn.commit()
+
+    result = storage.collect_orphan_blobs()
+
+    assert result["removed"] >= 1
+    assert not path.exists()
+
+
+def test_gc_keeps_active_asset_versions():
+    a = ingest.ingest_stream(io.BytesIO(_img_bytes(color=(250, 20, 5), size=(112, 112))), "gc-version.jpg")
+    old_key = a["storage_key"]
+    _new_sha, new_key, new_size = storage.store_bytes(b"replacement version", "txt")
+
+    conn = get_conn()
+    conn.execute(
+        "INSERT INTO asset_versions (asset_id, version_no, sha256, storage_key, size, note, created_at) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (a["id"], 1, a["sha256"], old_key, a["size"], "previous current", "2026-07-01T00:00:00Z"),
+    )
+    conn.execute(
+        "UPDATE assets SET storage_key = ?, size = ? WHERE id = ?",
+        (new_key, new_size, a["id"]),
+    )
+    conn.commit()
+
+    result = storage.collect_orphan_blobs()
+
+    assert old_key not in {b["key"] for b in result["blobs"]}
+    assert storage.blob_path(old_key).exists()
+    assert storage.blob_path(new_key).exists()
+
+
 def test_dublin_core_mapping():
     a = ingest.ingest_stream(io.BytesIO(_img_bytes(color=(120, 90, 210), size=(360, 360))),
                              "dc_test.jpg", title="DC Test")
