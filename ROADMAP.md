@@ -30,7 +30,7 @@ Checked items are built and verified; unchecked items are planned.
 - [ ] IIIF Presentation API manifest
 - [ ] OAI-PMH resumption tokens and selective harvesting by set
 - [ ] METS packaging with embedded PREMIS events for preservation exchange
-- [ ] Parse XMP into structured fields rather than storing it raw
+- [x] Parse XMP into structured fields rather than storing it raw (contributed in #8)
 
 ## Next: the government and compliance features
 
