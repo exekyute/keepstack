@@ -111,15 +111,19 @@ def ingest_stream(
             """INSERT INTO assets
                (uuid, sha256, filename, original_filename, mime_type, media_type, ext,
                 size, width, height, duration, title, description, alt_text, status,
-                storage_key, thumb_key, dc_creator, credit, rights_statement,
+                storage_key, thumb_key, dc_creator, dc_subject, dc_publisher, dc_date,
+                credit, rights_statement,
                 uploaded_by, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 asset_uuid, sha, filename, filename, meta["mime"], meta["media_type"], ext,
                 size, meta["width"], meta["height"], meta["duration"],
                 title or desc.get("title") or filename,
                 desc.get("description"), None, "active",
-                key, thumb_key, desc.get("creator"), desc.get("credit"), desc.get("rights"),
+                key, thumb_key, desc.get("creator"),
+                ", ".join(desc["keywords"]) if isinstance(desc.get("keywords"), list) else desc.get("keywords"),
+                desc.get("publisher"), desc.get("date"),
+                desc.get("credit"), desc.get("rights"),
                 (user or {}).get("id"), now, now,
             ),
         )

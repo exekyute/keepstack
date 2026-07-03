@@ -4,6 +4,7 @@ These run against a throwaway data directory so they never touch a real
 repository. Run with:  python -m pytest -q
 """
 import io
+import json
 import os
 import tempfile
 
@@ -21,6 +22,30 @@ from keepstack.db import get_conn, init_db  # noqa: E402
 def _img_bytes(color=(90, 130, 240), size=(400, 300)):
     buf = io.BytesIO()
     Image.new("RGB", size, color).save(buf, format="JPEG")
+    return buf.getvalue()
+
+
+def _xmp_img_bytes():
+    xmp = """<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/"
+           xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">
+    <rdf:Description>
+      <dc:title><rdf:Alt><rdf:li xml:lang="x-default">XMP Harbor Archive</rdf:li></rdf:Alt></dc:title>
+      <dc:description><rdf:Alt><rdf:li xml:lang="x-default">NeedleMuseum catalog caption</rdf:li></rdf:Alt></dc:description>
+      <dc:creator><rdf:Seq><rdf:li>Ada Archivist</rdf:li></rdf:Seq></dc:creator>
+      <dc:subject><rdf:Bag><rdf:li>estuaries</rdf:li><rdf:li>tidal maps</rdf:li></rdf:Bag></dc:subject>
+      <dc:publisher>NeedleMuseum Press</dc:publisher>
+      <dc:date>2026-07-02</dc:date>
+      <dc:rights>Creative Commons Test License</dc:rights>
+      <photoshop:Credit>Archive Credit Line</photoshop:Credit>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>"""
+    buf = io.BytesIO()
+    Image.new("RGB", (180, 120), (20, 90, 130)).save(buf, format="JPEG", xmp=xmp.encode("utf-8"))
     return buf.getvalue()
 
 
@@ -153,6 +178,29 @@ def test_dublin_core_mapping():
     assert dc["title"] == "DC Test"
     assert dc["type"] == "image"
     assert dc["identifier"] == a["uuid"]
+
+
+def test_xmp_fields_seed_catalog_and_search():
+    a = ingest.ingest_stream(io.BytesIO(_xmp_img_bytes()), "xmp_harbor.jpg")
+
+    assert a["title"] == "XMP Harbor Archive"
+    assert a["description"] == "NeedleMuseum catalog caption"
+    assert a["dc_creator"] == "Ada Archivist"
+    assert a["dc_subject"] == "estuaries, tidal maps"
+    assert a["dc_publisher"] == "NeedleMuseum Press"
+    assert a["dc_date"] == "2026-07-02"
+    assert a["rights_statement"] == "Creative Commons Test License"
+    assert a["credit"] == "Archive Credit Line"
+
+    dc = standards.dublin_core(a)
+    assert dc["publisher"] == "NeedleMuseum Press"
+
+    meta = get_conn().execute("SELECT xmp_json FROM asset_metadata WHERE asset_id = ?", (a["id"],)).fetchone()
+    xmp = json.loads(meta["xmp_json"])
+    assert xmp["fields"]["dc:publisher"] == "NeedleMuseum Press"
+
+    res = search.search(q="NeedleMuseum")
+    assert any(i["uuid"] == a["uuid"] for i in res["items"])
 
 
 def test_iiif_info_advertises_level_2():

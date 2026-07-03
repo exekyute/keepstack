@@ -12,6 +12,7 @@ import json
 import mimetypes
 from pathlib import Path
 from typing import Any, Optional
+from xml.etree import ElementTree as ET
 
 from PIL import ExifTags, Image, IptcImagePlugin
 
@@ -38,6 +39,26 @@ _IPTC_KEYS = {
     (2, 95): "state",
     (2, 101): "country",
     (2, 55): "date_created",
+}
+
+_XMP_NAMESPACES = {
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "photoshop": "http://ns.adobe.com/photoshop/1.0/",
+    "xmpRights": "http://ns.adobe.com/xap/1.0/rights/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+}
+
+_XMP_DESCRIPTIVE_KEYS = {
+    "dc:title": "title",
+    "dc:description": "description",
+    "dc:creator": "creator",
+    "dc:subject": "keywords",
+    "dc:rights": "rights",
+    "dc:publisher": "publisher",
+    "dc:date": "date",
+    "photoshop:Credit": "credit",
+    "photoshop:Source": "source",
+    "xmpRights:UsageTerms": "rights",
 }
 
 
@@ -122,7 +143,76 @@ def _read_xmp(img: Image.Image) -> dict:
         xmp = xmp.decode("utf-8", "replace")
     if isinstance(xmp, str) and xmp.strip():
         out["raw"] = xmp[:20000]
+        out.update(_parse_xmp(xmp))
     return out
+
+
+def _qname(tag: str) -> str:
+    if not tag.startswith("{"):
+        return tag
+    uri, local = tag[1:].split("}", 1)
+    for prefix, ns in _XMP_NAMESPACES.items():
+        if uri == ns:
+            return f"{prefix}:{local}"
+    return local
+
+
+def _clean_text(value: Optional[str]) -> str:
+    return " ".join((value or "").split())
+
+
+def _xmp_value(node: ET.Element) -> Any:
+    children = list(node)
+    if not children:
+        return _clean_text(node.text)
+    for child in children:
+        if _qname(child.tag) in {"rdf:Alt", "rdf:Seq", "rdf:Bag"}:
+            values = [_clean_text(li.text) for li in child if _clean_text(li.text)]
+            if _qname(child.tag) == "rdf:Alt" and values:
+                return values[0]
+            return values
+    text = _clean_text(" ".join(node.itertext()))
+    return text
+
+
+def _parse_xmp(raw: str) -> dict:
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        start = raw.find("<x:xmpmeta")
+        end = raw.rfind("</x:xmpmeta>")
+        if start == -1 or end == -1:
+            return {}
+        try:
+            root = ET.fromstring(raw[start:end + len("</x:xmpmeta>")])
+        except ET.ParseError:
+            return {}
+
+    fields: dict[str, Any] = {}
+    for node in root.iter():
+        for attr, value in node.attrib.items():
+            key = _qname(attr)
+            if key in _XMP_DESCRIPTIVE_KEYS and _clean_text(value):
+                fields[key] = _clean_text(value)
+        key = _qname(node.tag)
+        if key in _XMP_DESCRIPTIVE_KEYS:
+            value = _xmp_value(node)
+            if value:
+                fields[key] = value
+
+    descriptive: dict[str, Any] = {}
+    for xmp_key, desc_key in _XMP_DESCRIPTIVE_KEYS.items():
+        value = fields.get(xmp_key)
+        if not value:
+            continue
+        if desc_key == "keywords":
+            if isinstance(value, str):
+                value = [value]
+            descriptive.setdefault(desc_key, value)
+        else:
+            descriptive.setdefault(desc_key, value[0] if isinstance(value, list) else value)
+
+    return {"fields": fields, "descriptive": descriptive}
 
 
 def extract(path: Path, filename: str) -> dict:
@@ -156,22 +246,27 @@ def extract(path: Path, filename: str) -> dict:
         except Exception as exc:  # corrupt or unsupported image
             result["error"] = str(exc)
 
-    # Build a descriptive layer that prefers IPTC, then EXIF, for catalog seeding.
+    # Build a descriptive layer that prefers IPTC, then XMP, then EXIF.
     iptc = result["iptc"]
+    xmp_desc = (result["xmp"].get("descriptive") or {}) if isinstance(result["xmp"], dict) else {}
     exif = result["exif"]
     desc: dict[str, Any] = {}
-    if iptc.get("title") or iptc.get("headline"):
-        desc["title"] = iptc.get("title") or iptc.get("headline")
-    if iptc.get("caption") or exif.get("ImageDescription"):
-        desc["description"] = iptc.get("caption") or exif.get("ImageDescription")
-    if iptc.get("creator") or exif.get("Artist"):
-        desc["creator"] = iptc.get("creator") or exif.get("Artist")
-    if iptc.get("copyright") or exif.get("Copyright"):
-        desc["rights"] = iptc.get("copyright") or exif.get("Copyright")
-    if iptc.get("keywords"):
-        desc["keywords"] = iptc["keywords"]
-    if iptc.get("credit"):
-        desc["credit"] = iptc["credit"]
+    if iptc.get("title") or iptc.get("headline") or xmp_desc.get("title"):
+        desc["title"] = iptc.get("title") or iptc.get("headline") or xmp_desc.get("title")
+    if iptc.get("caption") or xmp_desc.get("description") or exif.get("ImageDescription"):
+        desc["description"] = iptc.get("caption") or xmp_desc.get("description") or exif.get("ImageDescription")
+    if iptc.get("creator") or xmp_desc.get("creator") or exif.get("Artist"):
+        desc["creator"] = iptc.get("creator") or xmp_desc.get("creator") or exif.get("Artist")
+    if iptc.get("copyright") or xmp_desc.get("rights") or exif.get("Copyright"):
+        desc["rights"] = iptc.get("copyright") or xmp_desc.get("rights") or exif.get("Copyright")
+    if iptc.get("keywords") or xmp_desc.get("keywords"):
+        desc["keywords"] = iptc.get("keywords") or xmp_desc.get("keywords")
+    if iptc.get("credit") or xmp_desc.get("credit"):
+        desc["credit"] = iptc.get("credit") or xmp_desc.get("credit")
+    if xmp_desc.get("publisher"):
+        desc["publisher"] = xmp_desc["publisher"]
+    if xmp_desc.get("date"):
+        desc["date"] = xmp_desc["date"]
     result["descriptive"] = desc
     return result
 
@@ -179,9 +274,13 @@ def extract(path: Path, filename: str) -> dict:
 def metadata_text(bundle: dict) -> str:
     """Flatten a metadata bundle into a searchable text blob for FTS."""
     parts: list[str] = []
-    for section in ("descriptive", "iptc", "exif"):
+    for section in ("descriptive", "iptc", "xmp", "exif"):
         data = bundle.get(section) or {}
         for k, v in data.items():
+            if k == "raw":
+                continue
+            if isinstance(v, dict):
+                v = " ".join(str(x) for x in v.values())
             if isinstance(v, (list, tuple)):
                 v = " ".join(str(x) for x in v)
             parts.append(f"{k} {v}")
