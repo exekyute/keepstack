@@ -284,4 +284,6 @@ def metadata_text(bundle: dict) -> str:
             if isinstance(v, (list, tuple)):
                 v = " ".join(str(x) for x in v)
             parts.append(f"{k} {v}")
+    if bundle.get("ocr_text"):
+        parts.append(str(bundle["ocr_text"]))
     return " ".join(parts)[:8000]

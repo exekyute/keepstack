@@ -10,6 +10,13 @@ semantic versioning.
 
 - Parse common XMP RDF fields into structured metadata, catalog fields, and
   full-text search.
+- OCR images at ingest through the Tesseract binary when it is installed, so
+  text inside scans and photos becomes searchable. No new Python dependencies;
+  disable with `KEEPSTACK_OCR_ENABLED=false`.
+- On-device CLIP vision model (optional `pip install onnxruntime`): real
+  semantic search over image content, visual similarity, and zero-shot
+  auto-tagging with no API keys, plus a `python -m keepstack reindex` command
+  to re-embed an existing catalog.
 - Advertise IIIF Image API level 2 and support region cropping, percent
   regions, best-fit sizing, and rotation for IIIF image requests.
 - Added `python -m keepstack gc` to remove blob files no longer referenced by

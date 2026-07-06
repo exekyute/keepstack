@@ -36,6 +36,9 @@ class Config:
         # Uploads
         self.max_upload_mb = int(os.environ.get("KEEPSTACK_MAX_UPLOAD_MB", "1024"))
 
+        # Optional OCR via the Tesseract binary (used only when installed).
+        self.ocr_enabled = _env_bool("KEEPSTACK_OCR_ENABLED", True)
+
         # Optional AI provider. When unset, Keepstack runs fully offline with
         # deterministic local fallbacks; nothing breaks.
         self.ai_enabled = _env_bool("KEEPSTACK_AI_ENABLED", False)

@@ -141,10 +141,11 @@ source code and audited for overclaiming. The short version:
 standards-native, and governance-complete at once. Install, cost, open
 standards, integrity/dedup, and audit are clear wins.
 
-**Where Keepstack trails today, on purpose:** AI is only heuristic without an
-optional key; preservation is fixity but not yet format migration;
-accessibility has alt-text but no published VPAT; there is no OCR or SSO yet;
-IIIF is basic. Adobe, Preservica, and Orange Logic beat it on those.
+**Where Keepstack trails today, on purpose:** the best AI tier needs one
+optional install (a local CLIP model, no API keys) and the minimal install is
+heuristic; preservation is fixity but not yet format migration; accessibility
+has alt-text but no published VPAT; there is no SSO yet. Adobe, Preservica,
+and Orange Logic beat it on those.
 
 Marking those gaps plainly is deliberate. A comparison that cannot admit a
 weakness is not trustworthy, and the gaps are the roadmap.

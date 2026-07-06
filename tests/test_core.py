@@ -7,13 +7,16 @@ import io
 import json
 import os
 import tempfile
+from pathlib import Path
+
+import pytest
 
 os.environ["KEEPSTACK_DATA_DIR"] = tempfile.mkdtemp(prefix="keepstack-test-")
 os.environ["KEEPSTACK_AI_ENABLED"] = "false"
 
 from PIL import Image  # noqa: E402
 
-from keepstack import ai, ingest, search, standards, storage, thumbnails  # noqa: E402
+from keepstack import ai, ingest, ocr, search, standards, storage, thumbnails, vision  # noqa: E402
 from keepstack.auth import (hash_password, make_token, role_at_least,  # noqa: E402
                          verify_password, verify_token)
 from keepstack.db import get_conn, init_db  # noqa: E402
@@ -231,6 +234,51 @@ def test_oai_identify_is_valid_xml():
     body, status = standards.oai_response({"verb": "Identify"})
     assert status == 200
     assert "<repositoryName>" in body and "OAI-PMH" in body
+
+
+@pytest.mark.skipif(not vision.ready(), reason="local vision model not installed")
+def test_local_clip_cross_modal_similarity():
+    from PIL import ImageDraw, ImageFont
+    data_dir = Path(os.environ["KEEPSTACK_DATA_DIR"])
+
+    page = Image.new("RGB", (448, 448), (250, 250, 250))
+    draw = ImageDraw.Draw(page)
+    try:
+        font = ImageFont.truetype("arial.ttf", 28)
+    except Exception:
+        font = ImageFont.load_default(size=28)
+    for i in range(12):
+        draw.text((20, 20 + i * 36), "Quarterly report on estuary water quality.", font=font, fill=(20, 20, 20))
+    page_path = data_dir / "clip_textpage.png"
+    page.save(page_path)
+    color_path = data_dir / "clip_colorfield.png"
+    Image.new("RGB", (448, 448), (215, 30, 30)).save(color_path)
+
+    tvec = vision.embed_text("a page of printed text")
+    pvec = vision.embed_image(page_path)
+    cvec = vision.embed_image(color_path)
+
+    assert tvec and pvec and cvec
+    assert ai.cosine(tvec, pvec) > ai.cosine(tvec, cvec)
+
+
+@pytest.mark.skipif(not ocr.available(), reason="tesseract binary not installed")
+def test_ocr_makes_image_text_searchable():
+    from PIL import ImageDraw, ImageFont
+    img = Image.new("RGB", (900, 240), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    try:
+        font = ImageFont.truetype("arial.ttf", 96)
+    except Exception:
+        font = ImageFont.load_default(size=96)
+    draw.text((40, 60), "QUILLFEATHER ARCHIVE", font=font, fill=(0, 0, 0))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+
+    a = ingest.ingest_stream(io.BytesIO(buf.getvalue()), "ocr_sample.png")
+
+    res = search.search(q="quillfeather")
+    assert any(i["uuid"] == a["uuid"] for i in res["items"])
 
 
 def test_version_endpoint_reports_name_and_version():

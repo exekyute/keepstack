@@ -68,6 +68,7 @@ overclaiming) is in [COMPARISON.md](COMPARISON.md).
 **Search and discovery**
 - Full-text (SQLite FTS5), faceted, and semantic search
 - "More like this" via embeddings
+- Text inside images is searchable when Tesseract is installed
 - Hierarchical collections
 
 **Governance and sharing**
@@ -130,13 +131,24 @@ All configuration is environment-driven with safe local defaults.
 | `KEEPSTACK_SECRET_KEY` | generated | Token signing key (set this in production) |
 | `KEEPSTACK_ADMIN_USER` / `KEEPSTACK_ADMIN_PASSWORD` | `admin` / `admin` | Bootstrap admin, created once |
 | `KEEPSTACK_PORT` | `8000` | HTTP port |
+| `KEEPSTACK_OCR_ENABLED` | `true` | OCR images with Tesseract when the binary is installed |
 | `KEEPSTACK_AI_ENABLED` | `false` | Turn on provider-backed AI |
 | `GROQ_API_KEY` | unset | Optional: vision tagging / captioning / alt-text |
 | `COHERE_API_KEY` | unset | Optional: higher-quality semantic embeddings |
 
-With no AI keys, Keepstack is fully functional using deterministic local fallbacks,
-and upgrades in quality when you add a key. See
-[ADR-0004](docs/decisions/ADR-0004-optional-offline-ai.md).
+AI works in three tiers, and every tier is optional:
+
+1. **Zero config.** Deterministic local fallbacks (lexical embeddings, colour
+   and orientation tags). Nothing to install, works air-gapped.
+2. **Local model (recommended).** `pip install onnxruntime`, then
+   `python -m keepstack reindex`. Keepstack downloads a small quantized CLIP
+   model once (about 150 MB, cached in the data directory) and runs it
+   on-device: real semantic search over image content, visual "more like
+   this", and zero-shot auto-tagging, with no API keys and no cloud calls.
+3. **Cloud keys.** Add `GROQ_API_KEY` (vision captions and alt-text) or
+   `COHERE_API_KEY` (text embeddings) for provider-backed quality.
+
+See [ADR-0004](docs/decisions/ADR-0004-optional-offline-ai.md) for the design.
 
 </details>
 

@@ -13,8 +13,9 @@ import json
 import uuid as uuidlib
 from typing import BinaryIO, Optional
 
-from . import ai, metadata, storage, thumbnails
+from . import ai, metadata, ocr, storage, thumbnails
 from .audit import now_iso
+from .config import config
 from .db import get_conn, transaction
 
 
@@ -73,7 +74,13 @@ def reindex_embedding(asset_id: int) -> None:
         (asset_id,),
     )]
     text = " ".join(filter(None, [a["title"], a["description"], a["alt_text"], a["filename"], " ".join(tags)]))
-    vec = ai.embed(text or a["filename"])
+    vec = None
+    if a["media_type"] == "image":
+        # Prefer a visual embedding when the local model is installed: text
+        # queries then match image content directly in the shared CLIP space.
+        vec = ai.embed_image(storage.blob_path(a["storage_key"]))
+    if vec is None:
+        vec = ai.embed(text or a["filename"])
     conn.execute("UPDATE assets SET embedding = ? WHERE id = ?", (ai.pack_embedding(vec), asset_id))
     conn.commit()
 
@@ -101,6 +108,10 @@ def ingest_stream(
 
     blob = storage.blob_path(key)
     meta = metadata.extract(blob, filename)
+    if meta["media_type"] == "image" and config.ocr_enabled and ocr.available():
+        text = ocr.extract_text(blob)
+        if text:
+            meta["ocr_text"] = text
     thumb_key = thumbnails.ensure_thumbnail(sha, key, meta["media_type"], ext)
 
     desc = meta.get("descriptive", {})

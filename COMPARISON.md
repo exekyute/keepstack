@@ -29,8 +29,8 @@ honesty and fairness auditors before being recorded here.
 | IIIF Image API | Standard deep-zoom delivery from one master | ◐ | · | ✓ | ✗ | ✗ | · | ✓ | · |
 | Digital preservation (fixity) | Assets verifiably readable in 50+ years | ◐ | · | ◐ | ✗ | ✗ | · | ✓ | ✓ |
 | Content-addressable dedup | Stores identical content once; integrity by hash | ✓ | · | · | ✓ | ◐ | · | · | · |
-| AI auto-tagging | Closes the gap when humans upload without tagging | ◐ | ✓ | ✗ | ✓ | $ | ✓ | · | ✓ |
-| Semantic / NL search | Finds assets nobody tagged | ◐ | ◐ | ◔ | ✓ | $ | ✓ | · | ✓ |
+| AI auto-tagging | Closes the gap when humans upload without tagging | ✓ | ✓ | ✗ | ✓ | $ | ✓ | · | ✓ |
+| Semantic / NL search | Finds assets nobody tagged | ✓ | ◐ | ◔ | ✓ | $ | ✓ | · | ✓ |
 | Faceted + full-text search | Precise drill-down retrieval, the moment of truth | ✓ | ✓ | ◐ | ◐ | ✓ | ✓ | · | ✓ |
 | OCR / text-in-image | Makes scanned documents findable | ◔ | ✓ | · | · | $ | ✓ | · | · |
 | Asset versioning | Change history plus revert / audit | ✓ | ✓ | ✓ | ✗ | ✓ | · | · | · |
@@ -64,10 +64,12 @@ free or self-hostable. Keepstack is the only one holding all four corners at onc
 
 The matrix marks these `partial`, `roadmap`, or `none` on purpose:
 
-- **AI is real but conditional.** Out of the box, auto-tagging is colour and
-  orientation heuristics, and semantic search is a lexical embedding. True
-  vision tagging and learned semantic search need an optional Groq or Cohere
-  key. Immich (local CLIP), Adobe (Sensei/Firefly), and Bynder lead here.
+- **AI needs one optional install to be at its best.** With
+  `pip install onnxruntime`, Keepstack runs a local CLIP model on-device:
+  real semantic search over image content, visual similarity, and zero-shot
+  auto-tagging, with no API keys. The minimal four-dependency install falls
+  back to lexical embeddings and colour heuristics. Adobe (Sensei/Firefly)
+  and Bynder still lead on captioning breadth and trained taxonomies.
 - **Preservation is fixity, not format migration.** Keepstack verifies integrity
   but does not yet do OAIS active format migration. Preservica and Orange
   Logic are purpose-built for that.

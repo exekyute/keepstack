@@ -18,11 +18,11 @@ Checked items are built and verified; unchecked items are planned.
 
 ## Next: close the AI gap without a cloud dependency
 
-- [ ] In-process local vision model (small CLIP) so auto-tagging and semantic
-      search are real with zero API keys, not just heuristic
+- [x] In-process local vision model (small CLIP) so auto-tagging and semantic
+      search are real with zero API keys, not just heuristic (#5)
 - [ ] Approximate-nearest-neighbor index (sqlite-vec or pgvector) so semantic
       search scales past tens of thousands of assets
-- [ ] Local OCR (Tesseract) so scanned documents and text-in-image are findable
+- [x] Local OCR (Tesseract) so scanned documents and text-in-image are findable (#4)
 
 ## Next: deepen the standards
 

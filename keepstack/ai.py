@@ -79,11 +79,24 @@ def _cohere_embed(text: str) -> Optional[list[float]]:
 
 
 def embed(text: str) -> list[float]:
+    from . import vision as _vision
+    if _vision.ready():
+        vec = _vision.embed_text(text)
+        if vec:
+            return vec
     if config.ai_enabled:
         vec = _cohere_embed(text)
         if vec:
             return vec
     return _local_embed(text)
+
+
+def embed_image(path: Path) -> Optional[list[float]]:
+    """Visual embedding in the shared CLIP space, when the local model is installed."""
+    from . import vision as _vision
+    if _vision.ready():
+        return _vision.embed_image(path)
+    return None
 
 
 def pack_embedding(vec: list[float]) -> bytes:
@@ -186,11 +199,17 @@ def _groq_vision(path: Path, mime: str) -> Optional[dict]:
 def enrich_image(path: Path, mime: str) -> dict:
     """Return {caption, alt_text, tags:[(name, confidence)]}."""
     result = {"caption": "", "alt_text": "", "tags": []}
-    vision = _groq_vision(path, mime)
-    if vision:
-        result["caption"] = (vision.get("caption") or "")[:500]
-        result["alt_text"] = (vision.get("alt_text") or "")[:500]
-        result["tags"] = [(str(t).lower().strip(), 0.85) for t in vision.get("tags", []) if t][:15]
+    remote = _groq_vision(path, mime)
+    if remote:
+        result["caption"] = (remote.get("caption") or "")[:500]
+        result["alt_text"] = (remote.get("alt_text") or "")[:500]
+        result["tags"] = [(str(t).lower().strip(), 0.85) for t in remote.get("tags", []) if t][:15]
         return result
+    from . import vision as _vision
+    if _vision.ready():
+        tags = _vision.zero_shot_tags(_vision.embed_image(path))
+        if tags:
+            result["tags"] = tags
+            return result
     result["tags"] = _local_image_tags(path)
     return result
