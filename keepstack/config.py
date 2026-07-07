@@ -29,6 +29,15 @@ class Config:
         self.secret_key = os.environ.get("KEEPSTACK_SECRET_KEY", "")
         self.token_ttl_hours = int(os.environ.get("KEEPSTACK_TOKEN_TTL_HOURS", "168"))
 
+        # Login throttling: lock out after N failures within the window, both
+        # per (username, ip) and per ip. Trusted proxies let client_ip honour
+        # X-Forwarded-For; without them the direct peer address is used.
+        self.login_max_attempts = int(os.environ.get("KEEPSTACK_LOGIN_MAX_ATTEMPTS", "5"))
+        self.login_max_attempts_per_ip = int(os.environ.get("KEEPSTACK_LOGIN_MAX_ATTEMPTS_PER_IP", "20"))
+        self.login_lockout_seconds = int(os.environ.get("KEEPSTACK_LOGIN_LOCKOUT_SECONDS", "300"))
+        self.trusted_proxies = [p.strip() for p in
+                                os.environ.get("KEEPSTACK_TRUSTED_PROXIES", "").split(",") if p.strip()]
+
         # Bootstrap admin (only used the first time the DB is created)
         self.admin_user = os.environ.get("KEEPSTACK_ADMIN_USER", "admin")
         self.admin_password = os.environ.get("KEEPSTACK_ADMIN_PASSWORD", "admin")

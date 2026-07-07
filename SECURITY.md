@@ -35,8 +35,21 @@ serves nothing.
 
 Deploy behind a reverse proxy with TLS, and be aware of the current limits:
 
-- No rate limiting on login or share endpoints yet, so put Keepstack behind a proxy
-  that provides it for internet-facing use.
+- Login is rate limited on two axes: after `KEEPSTACK_LOGIN_MAX_ATTEMPTS`
+  failures (default 5) for one username and IP, and after
+  `KEEPSTACK_LOGIN_MAX_ATTEMPTS_PER_IP` failures (default 20) from one IP across
+  any usernames, further attempts return 429 with a `Retry-After` header for
+  `KEEPSTACK_LOGIN_LOCKOUT_SECONDS` (default 300), and lockouts are audit-logged.
+  The client IP is the direct peer address; `X-Forwarded-For` is trusted only
+  when the peer is listed in `KEEPSTACK_TRUSTED_PROXIES` (comma-separated IPs or
+  CIDRs), so a directly-connected client cannot spoof its address to dodge the
+  limit. Set `KEEPSTACK_TRUSTED_PROXIES` when you run behind a reverse proxy.
+  The counter is in-memory (and thread-safe within one process); for a
+  multi-process deployment put a shared limiter in front as well. Share
+  endpoints are not yet rate limited.
+- Authentication is constant-time with respect to whether a username exists (the
+  absent-user path still runs a scrypt hash), so response timing does not leak
+  which usernames are valid.
 - The default bootstrap admin is `admin` / `admin`. Change
   `KEEPSTACK_ADMIN_PASSWORD` before first run, or change the password immediately.
 - Uploaded files are stored and served as-is. If you accept untrusted uploads,

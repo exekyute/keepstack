@@ -7,6 +7,7 @@ single-page web client is served from the ``web/`` directory at the root.
 from __future__ import annotations
 
 import io
+import ipaddress
 import json
 from pathlib import Path
 from typing import Optional
@@ -19,7 +20,8 @@ from fastapi.staticfiles import StaticFiles
 
 from . import __version__, ingest, search, standards, storage, thumbnails
 from .audit import log, now_iso
-from .auth import (authenticate, hash_password, make_token, role_at_least,
+from .auth import (authenticate, hash_password, login_locked, make_token,
+                   note_login_failure, note_login_success, role_at_least,
                    verify_password, verify_token)
 from .config import config
 from .db import get_conn, init_db, transaction
@@ -79,9 +81,36 @@ def require_role(minimum: str):
     return dep
 
 
+def _trusted_proxy_nets():
+    nets = []
+    for spec in config.trusted_proxies:
+        try:
+            nets.append(ipaddress.ip_network(spec, strict=False))
+        except ValueError:
+            continue
+    return nets
+
+
+def _ip_in(ip: str, nets) -> bool:
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return any(addr in net for net in nets)
+
+
 def client_ip(request: Request) -> str:
-    fwd = request.headers.get("X-Forwarded-For")
-    return fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "")
+    """Resolve the client IP, trusting X-Forwarded-For only from a configured
+    proxy. Without trusted proxies the direct peer address is authoritative, so
+    a directly-connected client cannot spoof its IP to dodge rate limiting."""
+    peer = request.client.host if request.client else ""
+    nets = _trusted_proxy_nets()
+    if nets and _ip_in(peer, nets):
+        fwd = request.headers.get("X-Forwarded-For", "")
+        for hop in reversed([h.strip() for h in fwd.split(",") if h.strip()]):
+            if not _ip_in(hop, nets):
+                return hop
+    return peer
 
 
 # ---------------------------------------------------------------------------
@@ -89,13 +118,24 @@ def client_ip(request: Request) -> str:
 # ---------------------------------------------------------------------------
 @app.post("/api/auth/login")
 def login(request: Request, body: dict = Body(...)):
-    user = authenticate(body.get("username", ""), body.get("password", ""))
+    username = body.get("username", "")
+    ip = client_ip(request)
+    remaining = login_locked(username, ip)
+    if remaining > 0:
+        raise HTTPException(
+            429, "Too many failed attempts, try again later",
+            headers={"Retry-After": str(int(remaining) + 1)},
+        )
+    user = authenticate(username, body.get("password", ""))
     if not user:
-        log("login.fail", detail=body.get("username"), ip=client_ip(request))
+        if note_login_failure(username, ip):
+            log("login.lockout", detail=username, ip=ip)
+        log("login.fail", detail=username, ip=ip)
         raise HTTPException(401, "Invalid credentials")
+    note_login_success(username, ip)
     get_conn().execute("UPDATE users SET last_login = ? WHERE id = ?", (now_iso(), user["id"]))
     get_conn().commit()
-    log("login.success", user=user, ip=client_ip(request))
+    log("login.success", user=user, ip=ip)
     return {"token": make_token(user["id"], user["role"]), "user": _user_public(user)}
 
 
@@ -612,6 +652,14 @@ def oai(request: Request):
 def iiif_info(uuid: str):
     a = _get_asset_or_404(uuid)
     return JSONResponse(standards.iiif_info(a))
+
+
+@app.get("/iiif/3/{uuid}/manifest.json")
+def iiif_manifest(uuid: str):
+    a = _get_asset_or_404(uuid)
+    if a["media_type"] != "image":
+        raise HTTPException(415, "IIIF manifests are available for images only")
+    return JSONResponse(standards.iiif_manifest(a))
 
 
 @app.get("/iiif/3/{uuid}/{region}/{size}/{rotation}/{quality}.{fmt}")

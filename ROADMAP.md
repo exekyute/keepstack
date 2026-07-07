@@ -27,7 +27,7 @@ Checked items are built and verified; unchecked items are planned.
 ## Next: deepen the standards
 
 - [x] IIIF Image API level 2: region, rotation, and best-fit sizing (contributed in #7)
-- [ ] IIIF Presentation API manifest
+- [x] IIIF Presentation API manifest (#15)
 - [ ] OAI-PMH resumption tokens and selective harvesting by set
 - [ ] METS packaging with embedded PREMIS events for preservation exchange
 - [x] Parse XMP into structured fields rather than storing it raw (contributed in #8)

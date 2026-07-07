@@ -25,7 +25,7 @@ from .db import get_conn
 # Dublin Core
 # ---------------------------------------------------------------------------
 def dublin_core(asset: dict) -> dict:
-    """Map an Keepstack asset onto the 15 Dublin Core elements."""
+    """Map a Keepstack asset onto the 15 Dublin Core elements."""
     return {
         "title": asset.get("title") or asset.get("filename"),
         "creator": asset.get("dc_creator") or asset.get("credit"),
@@ -195,4 +195,77 @@ def iiif_info(asset: dict) -> dict:
         ],
         "extraFormats": ["jpg"],
         "extraQualities": ["default"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# IIIF Presentation API 3.0 (manifest.json)
+# ---------------------------------------------------------------------------
+def iiif_manifest(asset: dict) -> dict:
+    """A IIIF Presentation 3.0 Manifest wrapping the asset's Image service.
+
+    Lets viewers like Mirador and Universal Viewer open the asset directly,
+    with its label and descriptive metadata, backed by the level-2 Image API.
+    """
+    base = f"{config.base_url}/iiif/3/{asset['uuid']}"
+    width = asset.get("width") or 1024
+    height = asset.get("height") or 1024
+    dc = dublin_core(asset)
+
+    label_fields = [
+        ("Creator", dc.get("creator")),
+        ("Date", dc.get("date")),
+        ("Description", dc.get("description")),
+        ("Subject", dc.get("subject")),
+        ("Publisher", dc.get("publisher")),
+        ("Rights", dc.get("rights")),
+        ("Format", dc.get("format")),
+    ]
+    metadata = [
+        {"label": {"en": [name]}, "value": {"none": [str(value)]}}
+        for name, value in label_fields if value
+    ]
+
+    return {
+        "@context": "http://iiif.io/api/presentation/3/context.json",
+        "id": f"{base}/manifest.json",
+        "type": "Manifest",
+        "label": {"none": [dc.get("title") or asset.get("filename") or asset["uuid"]]},
+        "metadata": metadata,
+        "items": [
+            {
+                "id": f"{base}/canvas/1",
+                "type": "Canvas",
+                "height": height,
+                "width": width,
+                "items": [
+                    {
+                        "id": f"{base}/canvas/1/page/1",
+                        "type": "AnnotationPage",
+                        "items": [
+                            {
+                                "id": f"{base}/canvas/1/annotation/1",
+                                "type": "Annotation",
+                                "motivation": "painting",
+                                "body": {
+                                    "id": f"{base}/full/max/0/default.jpg",
+                                    "type": "Image",
+                                    "format": "image/jpeg",
+                                    "height": height,
+                                    "width": width,
+                                    "service": [
+                                        {
+                                            "id": base,
+                                            "type": "ImageService3",
+                                            "profile": "level2",
+                                        }
+                                    ],
+                                },
+                                "target": f"{base}/canvas/1",
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
     }

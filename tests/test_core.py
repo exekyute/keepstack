@@ -236,6 +236,89 @@ def test_oai_identify_is_valid_xml():
     assert "<repositoryName>" in body and "OAI-PMH" in body
 
 
+def test_login_throttle_locks_success_clears_and_expires(monkeypatch):
+    from keepstack import auth
+    from keepstack.config import config
+    monkeypatch.setattr(config, "login_max_attempts", 3)
+    monkeypatch.setattr(config, "login_max_attempts_per_ip", 100)  # isolate the pair bucket
+    monkeypatch.setattr(config, "login_lockout_seconds", 60)
+    auth.reset_login_throttle()
+    user, ip = "admin", "203.0.113.9"
+
+    # First two failures do not lock; the third trips it.
+    assert auth.note_login_failure(user, ip, now=1000) is False
+    assert auth.note_login_failure(user, ip, now=1000) is False
+    assert auth.note_login_failure(user, ip, now=1000) is True
+    assert auth.login_locked(user, ip, now=1000) > 0
+    assert auth.login_locked(user, "198.51.100.4", now=1000) == 0  # a different IP is open
+
+    # A successful login clears an ACTIVE lockout (not just an empty bucket).
+    auth.note_login_success(user, ip)
+    assert auth.login_locked(user, ip, now=1000) == 0
+
+    # A fresh lockout later expires once the window passes.
+    for _ in range(3):
+        auth.note_login_failure(user, ip, now=2000)
+    assert auth.login_locked(user, ip, now=2000) > 0
+    assert auth.login_locked(user, ip, now=2000 + 61) == 0
+
+
+def test_login_throttle_per_ip_catches_username_spray(monkeypatch):
+    from keepstack import auth
+    from keepstack.config import config
+    monkeypatch.setattr(config, "login_max_attempts", 100)  # pair bucket effectively off
+    monkeypatch.setattr(config, "login_max_attempts_per_ip", 4)
+    monkeypatch.setattr(config, "login_lockout_seconds", 60)
+    auth.reset_login_throttle()
+    ip = "203.0.113.50"
+    # Every username is distinct, so no pair bucket ever trips, but the per-IP
+    # bucket does after four sprayed attempts, locking the whole source IP.
+    for i in range(4):
+        assert auth.login_locked(f"user{i}", ip, now=500) == 0
+        auth.note_login_failure(f"user{i}", ip, now=500)
+    assert auth.login_locked("someone-else", ip, now=500) > 0
+
+
+def test_client_ip_ignores_spoofed_xff(monkeypatch):
+    from keepstack.app import client_ip
+    from keepstack.config import config
+
+    class _Req:
+        def __init__(self, peer, xff=None):
+            self.client = type("C", (), {"host": peer})()
+            self.headers = {"X-Forwarded-For": xff} if xff else {}
+
+    # No trusted proxies: X-Forwarded-For is ignored, the real peer wins.
+    monkeypatch.setattr(config, "trusted_proxies", [])
+    assert client_ip(_Req("198.51.100.7", xff="1.2.3.4")) == "198.51.100.7"
+
+    # Behind a trusted proxy: the right-most non-proxy hop is the client.
+    monkeypatch.setattr(config, "trusted_proxies", ["10.0.0.0/8"])
+    assert client_ip(_Req("10.0.0.9", xff="9.9.9.9, 10.0.0.5")) == "9.9.9.9"
+    # An untrusted direct peer still cannot spoof its way past.
+    assert client_ip(_Req("203.0.113.1", xff="9.9.9.9")) == "203.0.113.1"
+
+
+def test_iiif_manifest_shape():
+    a = ingest.ingest_stream(io.BytesIO(_img_bytes(size=(300, 200))),
+                             "manifest_test.jpg", title="Manifest Test")
+    m = standards.iiif_manifest(a)
+    assert m["type"] == "Manifest"
+    assert m["@context"].endswith("presentation/3/context.json")
+    assert m["label"]["none"] == ["Manifest Test"]
+
+    canvas = m["items"][0]
+    assert canvas["type"] == "Canvas"
+    assert canvas["width"] == 300 and canvas["height"] == 200
+
+    anno = canvas["items"][0]["items"][0]
+    assert anno["motivation"] == "painting"
+    assert anno["body"]["id"].endswith("/full/max/0/default.jpg")
+    service = anno["body"]["service"][0]
+    assert service["type"] == "ImageService3"
+    assert service["id"].endswith(f"/iiif/3/{a['uuid']}")
+
+
 @pytest.mark.skipif(not vision.ready(), reason="local vision model not installed")
 def test_local_clip_cross_modal_similarity():
     from PIL import ImageDraw, ImageFont

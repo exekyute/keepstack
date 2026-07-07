@@ -131,6 +131,7 @@ All configuration is environment-driven with safe local defaults.
 | `KEEPSTACK_SECRET_KEY` | generated | Token signing key (set this in production) |
 | `KEEPSTACK_ADMIN_USER` / `KEEPSTACK_ADMIN_PASSWORD` | `admin` / `admin` | Bootstrap admin, created once |
 | `KEEPSTACK_PORT` | `8000` | HTTP port |
+| `KEEPSTACK_TRUSTED_PROXIES` | unset | Comma-separated proxy IPs/CIDRs whose `X-Forwarded-For` to trust |
 | `KEEPSTACK_OCR_ENABLED` | `true` | OCR images with Tesseract when the binary is installed |
 | `KEEPSTACK_AI_ENABLED` | `false` | Turn on provider-backed AI |
 | `GROQ_API_KEY` | unset | Optional: vision tagging / captioning / alt-text |

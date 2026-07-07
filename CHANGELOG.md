@@ -22,6 +22,13 @@ semantic versioning.
 - Added `python -m keepstack gc` to remove blob files no longer referenced by
   active assets or their version history.
 
+- IIIF Presentation API 3.0 manifest at `GET /iiif/3/{uuid}/manifest.json`, so
+  viewers like Mirador and Universal Viewer open assets directly with their
+  label and metadata.
+- Login rate limiting: repeated failed attempts for a username and IP are
+  locked out with a 429 and `Retry-After`, and the lockout is audit-logged.
+  Tunable with `KEEPSTACK_LOGIN_MAX_ATTEMPTS` and `KEEPSTACK_LOGIN_LOCKOUT_SECONDS`.
+
 ### Changed
 
 - Switched the web interface to a light theme: white and soft-gray surfaces
